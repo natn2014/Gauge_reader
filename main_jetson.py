@@ -70,12 +70,20 @@ class GaugeReaderApp(QMainWindow):
         model_path = "gauge_epoch-100.pt"
         video_source = V4L2DeviceSelector.get_default_device()
         print(f"[Jetson] Video source initialized: {video_source}")
+        self.rotate_180 = True
+        self.current_frame = None
+        self.current_annotated_frame = None
 
         self.ui.tableWidget_Gauge_Values.setRowCount(1)
         self.ui.tableWidget_Gauge_Values.setColumnCount(5)
         self.ui.tableWidget_Gauge_Values.setHorizontalHeaderLabels(
             ['Min Value', 'Max Value', 'Current Value', 'Converted Value', 'QR Code Data']
         )
+        
+        # Stretch table to match screen width
+        from PySide6.QtWidgets import QHeaderView
+        header = self.ui.tableWidget_Gauge_Values.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         # Load YOLO model - enable GPU
         self.model = YOLO(model_path)
@@ -110,6 +118,7 @@ class GaugeReaderApp(QMainWindow):
         self.plot_timer.start(5000)
 
         self.ui.pushButton_Export_CSV.clicked.connect(self.export_data)
+        self.ui.pushButton_Save_Image.clicked.connect(self.save_image)
 
         self.qr_timer = QTimer(self)
         self.qr_timer.timeout.connect(self.read_qr_code)
@@ -139,18 +148,39 @@ class GaugeReaderApp(QMainWindow):
         if not ret:
             return
 
-        results = self.model.predict(frame, verbose=False, imgsz=640, conf=0.25, iou=0.45, device=0 if self.use_gpu else 'cpu')
+        if self.rotate_180:
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+
+        results = self.model.predict(frame, verbose=False, imgsz=640, conf=0.10, iou=0.45, device=0 if self.use_gpu else 'cpu')
         boxes = results[0].boxes
-        
+        annotated_frame = frame.copy()
+
         if boxes is None or len(boxes) == 0:
-            self.display_frame(frame)
+            self.display_frame(annotated_frame)
             return
 
+        # Filter and collect detections - only keep classes 0 (Center), 1 (Start), 2 (End), 3 (Tip)
+        # Limit to 1 object max per class
         positions = {}
+        class_counts = {}
+        
         for i in range(len(boxes)):
-            x1, y1, x2, y2 = boxes.xyxy[i].tolist()
             class_id = int(boxes.cls[i].item())
+            
+            # Only process Center (0), Start (1), End (2), and Tip (3) classes
+            if class_id not in [0, 1, 2, 3]:
+                continue
+            
+            # Limit to 1 object per class (keep the one with highest confidence)
+            if class_id in class_counts:
+                continue
+            
+            x1, y1, x2, y2 = boxes.xyxy[i].tolist()
+            conf = float(boxes.conf[i].item()) if boxes.conf is not None else 0.0
             x, y = int((x1 + x2) / 2), int((y1 + y2) / 2)
+            
+            class_counts[class_id] = 1
+            
             if class_id == 0:
                 positions['Center'] = (x, y)
             elif class_id == 1:
@@ -160,14 +190,18 @@ class GaugeReaderApp(QMainWindow):
             elif class_id == 3:
                 positions['Tip'] = (x, y)
 
-        if not all(key in positions for key in ['Center', 'Start', 'End', 'Tip']):
-            self.display_frame(frame)
+        # Check if all required objects are detected
+        if not all(key in positions for key in ['Start', 'End', 'Tip']):
+            self.display_frame(annotated_frame)
             return
 
+        # Validate minimum distance between Start and End
         if self.calculate_distance(positions['Start'], positions['End']) < 50:
-            self.display_frame(frame)
+            self.display_frame(annotated_frame)
             return
-            
+        
+        # Enforce positioning logic: Start must be left (smaller x), End must be right (larger x)
+        # Swap if needed
         if positions['Start'][0] > positions['End'][0]:
             positions['Start'], positions['End'] = positions['End'], positions['Start']
 
@@ -181,26 +215,56 @@ class GaugeReaderApp(QMainWindow):
             angle2 = degrees(atan2(dy2, dx2))
             return (angle2 - angle1) % 360
 
-        center = positions['Center']
+        # Use Center as reference if available, otherwise use Start
+        center = positions.get('Center', positions['Start'])
         angle_start_to_tip = calculate_angle(positions['Start'], positions['Tip'], center)
         angle_start_to_end = calculate_angle(positions['Start'], positions['End'], center)
 
         gauge_range = gauge_max_value - gauge_min_value
         gauge_current_value = gauge_min_value + (angle_start_to_tip / angle_start_to_end) * gauge_range if angle_start_to_end != 0 else gauge_min_value
+        
+        # Clamp gauge_current_value to valid range [0, 100]
+        gauge_current_value = max(gauge_min_value, min(gauge_current_value, gauge_max_value))
 
         self.ui.tableWidget_Gauge_Values.setItem(0, 0, QTableWidgetItem(f"{gauge_min_value:.2f}%"))
         self.ui.tableWidget_Gauge_Values.setItem(0, 1, QTableWidgetItem(f"{gauge_max_value:.2f}%"))
         self.ui.tableWidget_Gauge_Values.setItem(0, 2, QTableWidgetItem(f"{gauge_current_value:.2f}%"))
         self.ui.tableWidget_Gauge_Values.setItem(0, 3, QTableWidgetItem(f"{self.convert_gauge_values(gauge_current_value):.4f}  MPa"))
 
-        annotated_frame = frame.copy()
+        # Draw detections with red circles and blue text
         for key, (x, y) in positions.items():
-            color = (0, 255, 0) if key == 'Tip' else (255, 0, 0)
-            cv2.circle(annotated_frame, (x, y), 5, color, -1)
+            if key == 'Center':
+                # Blue circle for center (BGR format: 255, 0, 0)
+                cv2.circle(annotated_frame, (x, y), 6, (255, 0, 0), -1)
+                cv2.putText(
+                    annotated_frame,
+                    key,
+                    (x + 10, max(y - 10, 0)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (255, 0, 0),
+                    2,
+                    cv2.LINE_AA
+                )
+            else:
+                # Red circles for other points (BGR format: 0, 0, 255)
+                cv2.circle(annotated_frame, (x, y), 6, (0, 0, 255), -1)
+                # Blue text (BGR format: 255, 0, 0)
+                cv2.putText(
+                    annotated_frame,
+                    key,
+                    (x + 10, max(y - 10, 0)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (255, 0, 0),
+                    2,
+                    cv2.LINE_AA
+                )
         
         self.display_frame(annotated_frame)
 
     def display_frame(self, frame):
+        self.current_annotated_frame = frame.copy()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = frame.shape
         bytes_per_line = ch * w
@@ -247,9 +311,20 @@ class GaugeReaderApp(QMainWindow):
             except FileNotFoundError:
                 self.data.to_csv('gauge_data.csv', index=False)
 
+    def save_image(self):
+        """Save current annotated frame as PNG with timestamp filename"""
+        if self.current_annotated_frame is not None:
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"gauge_frame_{timestamp}.png"
+            cv2.imwrite(filename, self.current_annotated_frame)
+            print(f"[Jetson] Image saved: {filename}")
+
     def read_qr_code(self):
         ret, frame = self.cap.read()
         if ret:
+            if self.rotate_180:
+                frame = cv2.rotate(frame, cv2.ROTATE_180)
             qr_detector = cv2.QRCodeDetector()
             data, _, _ = qr_detector.detectAndDecode(frame)
             if data:
@@ -342,7 +417,6 @@ def main():
         print("[Jetson] Warning: styles.qss not found.")
     
     window = GaugeReaderApp()
-    window.show()
     app.exec()
 
 if __name__ == "__main__":

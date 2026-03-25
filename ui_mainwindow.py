@@ -233,6 +233,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.pushButton_Export_CSV)
 
+        self.pushButton_Save_Image = QPushButton(self.groupBox_Previous)
+        self.pushButton_Save_Image.setObjectName(u"pushButton_Save_Image")
+
+        self.horizontalLayout_2.addWidget(self.pushButton_Save_Image)
+
 
         self.verticalLayout_9.addLayout(self.horizontalLayout_2)
 
@@ -461,6 +466,7 @@ class Ui_MainWindow(object):
         self.label.setText(QCoreApplication.translate("MainWindow", u"Model", None))
         self.pushButton_Show.setText(QCoreApplication.translate("MainWindow", u"Show", None))
         self.pushButton_Export_CSV.setText(QCoreApplication.translate("MainWindow", u"Export CSV", None))
+        self.pushButton_Save_Image.setText(QCoreApplication.translate("MainWindow", u"Save Image", None))
         self.label_Selected_Graph.setText(QCoreApplication.translate("MainWindow", u"GraphLabel", None))
         self.preset_label.setText(QCoreApplication.translate("MainWindow", u"Quick Filter:", None))
         self.preset_today.setText(QCoreApplication.translate("MainWindow", u"Today", None))
