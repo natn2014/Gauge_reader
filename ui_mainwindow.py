@@ -20,13 +20,13 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDateEd
     QHeaderView, QLabel, QLayout, QMainWindow,
     QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
     QTabWidget, QTableWidget, QTableWidgetItem, QVBoxLayout,
-    QWidget)
+    QWidget, QCalendarWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
-            MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(777, 599)
+            MainWindow.setObjectName(u"GaugeMonitor")
+        MainWindow.resize(800, 600)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_12 = QVBoxLayout(self.centralwidget)
@@ -52,12 +52,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.setObjectName(u"verticalLayout_8")
         self.verticalLayout_6 = QVBoxLayout()
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.pushButton_Select_Model = QPushButton(self.groupBox_Data_Monitor)
-        self.pushButton_Select_Model.setObjectName(u"pushButton_Select_Model")
-
-        self.verticalLayout_6.addWidget(self.pushButton_Select_Model)
-
-        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6 = QVBoxLayout()
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.label_Guage_Video = QLabel(self.groupBox_Data_Monitor)
         self.label_Guage_Video.setObjectName(u"label_Guage_Video")
@@ -74,19 +69,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_14 = QVBoxLayout()
         self.verticalLayout_14.setObjectName(u"verticalLayout_14")
-        self.label_Past_Records_Graph = QLabel(self.groupBox_Data_Monitor)
-        self.label_Past_Records_Graph.setObjectName(u"label_Past_Records_Graph")
-        self.label_Past_Records_Graph.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.verticalLayout_14.addWidget(self.label_Past_Records_Graph)
-
-        self.line_7 = QFrame(self.groupBox_Data_Monitor)
-        self.line_7.setObjectName(u"line_7")
-        self.line_7.setFrameShape(QFrame.Shape.HLine)
-        self.line_7.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.verticalLayout_14.addWidget(self.line_7)
-
         self.tableWidget_Gauge_Values = QTableWidget(self.groupBox_Data_Monitor)
         self.tableWidget_Gauge_Values.setObjectName(u"tableWidget_Gauge_Values")
 
@@ -125,6 +107,60 @@ class Ui_MainWindow(object):
         self.groupBox_Previous.setObjectName(u"groupBox_Previous")
         self.verticalLayout_9 = QVBoxLayout(self.groupBox_Previous)
         self.verticalLayout_9.setObjectName(u"verticalLayout_9")
+        
+        # Add preset buttons row
+        self.horizontalLayout_presets = QHBoxLayout()
+        self.horizontalLayout_presets.setObjectName(u"horizontalLayout_presets")
+        
+        self.preset_label = QLabel(self.groupBox_Previous)
+        self.preset_label.setObjectName(u"preset_label")
+        self.preset_label.setText("Quick Filter:")
+        self.horizontalLayout_presets.addWidget(self.preset_label)
+        
+        self.preset_today = QPushButton(self.groupBox_Previous)
+        self.preset_today.setObjectName(u"preset_today")
+        self.preset_today.setText("Today")
+        self.preset_today.setProperty("class", "preset")
+        self.preset_today.setCheckable(True)
+        self.horizontalLayout_presets.addWidget(self.preset_today)
+        
+        self.preset_7days = QPushButton(self.groupBox_Previous)
+        self.preset_7days.setObjectName(u"preset_7days")
+        self.preset_7days.setText("Last 7 Days")
+        self.preset_7days.setProperty("class", "preset")
+        self.preset_7days.setCheckable(True)
+        self.horizontalLayout_presets.addWidget(self.preset_7days)
+        
+        self.preset_30days = QPushButton(self.groupBox_Previous)
+        self.preset_30days.setObjectName(u"preset_30days")
+        self.preset_30days.setText("Last 30 Days")
+        self.preset_30days.setProperty("class", "preset")
+        self.preset_30days.setCheckable(True)
+        self.horizontalLayout_presets.addWidget(self.preset_30days)
+        
+        self.preset_all = QPushButton(self.groupBox_Previous)
+        self.preset_all.setObjectName(u"preset_all")
+        self.preset_all.setText("All Data")
+        self.preset_all.setProperty("class", "preset")
+        self.preset_all.setCheckable(True)
+        self.horizontalLayout_presets.addWidget(self.preset_all)
+        
+        self.preset_custom = QPushButton(self.groupBox_Previous)
+        self.preset_custom.setObjectName(u"preset_custom")
+        self.preset_custom.setText("Custom")
+        self.preset_custom.setProperty("class", "preset")
+        self.preset_custom.setCheckable(True)
+        self.horizontalLayout_presets.addWidget(self.preset_custom)
+        
+        self.horizontalLayout_presets.addStretch()
+        self.verticalLayout_9.addLayout(self.horizontalLayout_presets)
+        
+        # Separator
+        self.line_presets = QFrame(self.groupBox_Previous)
+        self.line_presets.setObjectName(u"line_presets")
+        self.line_presets.setFrameShape(QFrame.Shape.HLine)
+        self.line_presets.setFrameShadow(QFrame.Shadow.Sunken)
+        self.verticalLayout_9.addWidget(self.line_presets)
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalSpacer = QSpacerItem(5, 5, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -205,7 +241,24 @@ class Ui_MainWindow(object):
         self.line_3.setFrameShape(QFrame.Shape.HLine)
         self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
 
+        # Separator
+        self.line_3 = QFrame(self.groupBox_Previous)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setFrameShape(QFrame.Shape.HLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
         self.verticalLayout_9.addWidget(self.line_3)
+        
+        # Add calendar widget for custom date selection
+        self.horizontalLayout_calendar = QHBoxLayout()
+        self.horizontalLayout_calendar.setObjectName(u"horizontalLayout_calendar")
+        
+        self.calendar = QCalendarWidget(self.groupBox_Previous)
+        self.calendar.setObjectName(u"calendar")
+        self.calendar.setVisible(False)
+        self.calendar.setMinimumHeight(200)
+        self.horizontalLayout_calendar.addWidget(self.calendar)
+        
+        self.verticalLayout_9.addLayout(self.horizontalLayout_calendar)
 
         self.verticalLayout_4 = QVBoxLayout()
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
@@ -225,6 +278,23 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addLayout(self.verticalLayout_3)
 
         self.tabWidget.addTab(self.tab_2, "")
+        self.tab_Graph = QWidget()
+        self.tab_Graph.setObjectName(u"tab_Graph")
+        self.verticalLayout_Graph = QVBoxLayout(self.tab_Graph)
+        self.verticalLayout_Graph.setObjectName(u"verticalLayout_Graph")
+        self.groupBox_Graph = QGroupBox(self.tab_Graph)
+        self.groupBox_Graph.setObjectName(u"groupBox_Graph")
+        self.verticalLayout_Graph_Group = QVBoxLayout(self.groupBox_Graph)
+        self.verticalLayout_Graph_Group.setObjectName(u"verticalLayout_Graph_Group")
+        self.label_Past_Records_Graph = QLabel(self.groupBox_Graph)
+        self.label_Past_Records_Graph.setObjectName(u"label_Past_Records_Graph")
+        self.label_Past_Records_Graph.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout_Graph_Group.addWidget(self.label_Past_Records_Graph)
+
+        self.groupBox_Graph.setLayout(self.verticalLayout_Graph_Group)
+        self.verticalLayout_Graph.addWidget(self.groupBox_Graph)
+        self.tabWidget.addTab(self.tab_Graph, "")
         self.tab_3 = QWidget()
         self.tab_3.setObjectName(u"tab_3")
         self.horizontalLayout_3 = QHBoxLayout(self.tab_3)
@@ -380,10 +450,11 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.groupBox_Data_Monitor.setTitle(QCoreApplication.translate("MainWindow", u"Data Monitor", None))
-        self.pushButton_Select_Model.setText(QCoreApplication.translate("MainWindow", u"Select : Model", None))
         self.label_Guage_Video.setText(QCoreApplication.translate("MainWindow", u"Gauge Video Label", None))
-        self.label_Past_Records_Graph.setText(QCoreApplication.translate("MainWindow", u"Past 300 Records GraphLabel", None))
+        self.label_Past_Records_Graph.setText(QCoreApplication.translate("MainWindow", u"Past Records Graph", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Monitor", None))
+        self.groupBox_Graph.setTitle(QCoreApplication.translate("MainWindow", u"Graph Data", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_Graph), QCoreApplication.translate("MainWindow", u"Graph", None))
         self.groupBox_Previous.setTitle(QCoreApplication.translate("MainWindow", u"Previous Data", None))
         self.label_Start.setText(QCoreApplication.translate("MainWindow", u"Start", None))
         self.label_End.setText(QCoreApplication.translate("MainWindow", u"End", None))
@@ -391,6 +462,12 @@ class Ui_MainWindow(object):
         self.pushButton_Show.setText(QCoreApplication.translate("MainWindow", u"Show", None))
         self.pushButton_Export_CSV.setText(QCoreApplication.translate("MainWindow", u"Export CSV", None))
         self.label_Selected_Graph.setText(QCoreApplication.translate("MainWindow", u"GraphLabel", None))
+        self.preset_label.setText(QCoreApplication.translate("MainWindow", u"Quick Filter:", None))
+        self.preset_today.setText(QCoreApplication.translate("MainWindow", u"Today", None))
+        self.preset_7days.setText(QCoreApplication.translate("MainWindow", u"Last 7 Days", None))
+        self.preset_30days.setText(QCoreApplication.translate("MainWindow", u"Last 30 Days", None))
+        self.preset_all.setText(QCoreApplication.translate("MainWindow", u"All Data", None))
+        self.preset_custom.setText(QCoreApplication.translate("MainWindow", u"Custom", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QCoreApplication.translate("MainWindow", u"Record", None))
         self.groupBox_Setting_Gauge.setTitle(QCoreApplication.translate("MainWindow", u"Setting Gauge", None))
         ___qtablewidgetitem = self.tableWidget_Setting_Gauge.horizontalHeaderItem(0)

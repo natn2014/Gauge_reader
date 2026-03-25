@@ -1,0 +1,16 @@
+[Unit]
+Description=Vacuum Bag Gauge Reader Application
+After=network.target
+
+[Service]
+Type=simple
+User=nvidia
+WorkingDirectory=/home/nvidia/VacuumBagGauge
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/nvidia/.Xauthority"
+ExecStart=/home/nvidia/VacuumBagGauge/gauge_venv/bin/python3 main_jetson.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
