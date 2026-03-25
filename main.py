@@ -100,7 +100,7 @@ class GaugeReaderApp(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        self.showFullScreen()
         model_path = "gauge_epoch-100.pt"
         
         # Get video source from user selection
