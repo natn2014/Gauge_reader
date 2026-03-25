@@ -58,7 +58,7 @@ class GaugeReaderApp(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        
+        self.showFullScreen()        
         # Check GPU availability
         self.use_gpu = torch.cuda.is_available()
         if self.use_gpu:
